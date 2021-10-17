@@ -125,11 +125,6 @@ export class Connect extends MainController {
 
     send (data): void {
 
-        /*
-        for (const key in data)
-            data[key] = String(data[key])
-            */
-
         this.socket.send(JSON.stringify(data))
 
     }
