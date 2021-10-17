@@ -1,0 +1,46 @@
+{
+    "DataBase": {
+        "host": "",
+        "dbname": "",
+        "username": "",
+        "password": ""
+    },
+    "host": {
+        "club_id": 0,
+        "user_id": 0,
+        "token": "",
+        "system_id": "85acbf2e445c205f695af78309f14c12"
+    },
+    "super_admin": 0,
+    "welcome_message": {
+        "enable": false,
+        "text": "Добро пожаловать!",
+        "interval": 3600
+    },
+    "limits": {
+        "messages": {
+            "count": 5,
+            "time": 1
+        },
+        "user_messages": {
+            "count": 2,
+            "time": 1
+        },
+        "enter": {
+            "count": 3,
+            "time": 2
+        },
+        "likes": {
+            "count": 3,
+            "time": 1
+        },
+        "dislikes": {
+            "count": 3,
+            "time": 1
+        },
+        "superlikes": {
+            "count": 3,
+            "time": 1
+        }
+    }
+}
