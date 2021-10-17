@@ -30,7 +30,7 @@ MySQL, NodeJS, желательно сервер или VDS/VPS и второй 
 
 ## Конфиг (config.json)
 
-```json
+```JSON5
 {
     "DataBase": {
         "host": "",     // Адрес MySQL-сервера
