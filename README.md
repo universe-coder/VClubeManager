@@ -13,9 +13,9 @@ MySQL, NodeJS, желательно сервер или VDS/VPS и второй 
 1. Клонируем репозитории и заходим в папку проекта
 2. Устанавливаем и настраиваем MySQL
 3. Импортируем в базу данных таблицы из файла **vclube_manager.sql**
-4. Устанавливаем NodeJS
+4. Устанавливаем **NodeJS**
 5. Вводим команду `npm install`
-6. Устанавливаем TypeScript: **npm install -g typescript**
+6. Устанавливаем TypeScript: `npm install -g typescript`
 7. Вводим нужные данные в **config.json**
 8. Компилируем проект командой `tsc`
 9. Запускаем программу командой `node dist/index.js`
