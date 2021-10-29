@@ -1,5 +1,7 @@
 import * as mysql from 'mysql2'
 import { Config } from './Interface/MainController'
+import { MainController } from './MainController'
+
 
 export class DB {
 
@@ -45,17 +47,23 @@ export class DB {
 
         let res: mysql.RowDataPacket[] | mysql.RowDataPacket[][] | mysql.OkPacket | mysql.OkPacket[] | mysql.ResultSetHeader
 
-        return new Promise((resolve) => {
+        return new Promise(async (resolve) => {
 
-            const conn = mysql.createConnection({
-                host: this.host,
-                user: this.username,
-                database: this.database,
-                password: this.password
-              })
-            conn.query(str, parms, (err, res) => resolve(res))
-            conn.end()
-
+            try {
+                const conn = mysql.createConnection({
+                    host: this.host,
+                    user: this.username,
+                    database: this.database,
+                    password: this.password
+                  })
+                conn.query(str, parms, (err, res) => resolve(res))
+                conn.end()
+            }catch (err) {
+                console.log(err)
+                await MainController.sleep(100)
+                resolve(await this.query(str, parms))
+            }
+            
         })
 
     }
