@@ -51,7 +51,7 @@ export class Connect extends MainController {
 
     async reconnect (err: string): Promise<void> {
 
-        await this.sleep(50000)
+        await MainController.sleep(50000)
         this.run()
         console.log(`${this.config.host.user_id}: reconnecting! (${err})`)
 
@@ -86,14 +86,14 @@ export class Connect extends MainController {
 
     async pong (): Promise<void> {
 
-        await this.sleep(2000)
+        await MainController.sleep(2000)
         this.send({ type: "ping" })
 
     }
 
     async ping (): Promise<void> {
 
-        await this.sleep(2000)
+        await MainController.sleep(2000)
         this.send({ type: "pong" })
 
     }

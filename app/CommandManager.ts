@@ -1,6 +1,7 @@
 import { Connect } from "./Connect"
 import { Module } from "./Module"
 import { EnteredUser } from "./Interface/CommandManager"
+import { MainController } from "./MainController"
 
 export class CommandManager extends Module {
 
@@ -34,7 +35,7 @@ export class CommandManager extends Module {
 
             if (!enterUserInfo) {
 
-                await this.conn.sleep(2000)
+                await MainController.sleep(2000)
                 this.createMessage(this.conn.config.welcome_message.text)
                 this.conn.enteredUsers[this.conn.enteredUsers.length] = { user_id: this.user_id, date: this.date }
 
@@ -193,7 +194,7 @@ ID: ${user_id};
                         user_id: user_id
                     })
 
-                    await this.createMessage(`Пользователь забанен на срок: ${(duration) ? duration+' секунд' : 'навсегда'}`)
+                    await this.createMessage(`Пользователь забанен на срок: ${(duration) ? (duration - this.date)+' секунд' : 'навсегда'}`)
         
                 }else {
         
