@@ -43,7 +43,7 @@ export class CommandManager extends Module {
 
         }
         
-        let splitText = this.text.split(' '),
+        const splitText = this.text.split(' '),
             index: number = -1
 
         if ((index = this.searchCom(splitText, '!admin')) == 0)
@@ -185,7 +185,7 @@ ID: ${user_id};
                     if (duration > 0)
                         duration = this.date + duration
         
-                    let parms = [String(this.club_id), String(this.user_id), String(duration), String(this.date), String(user_id)]
+                    const parms = [String(this.club_id), String(this.user_id), String(duration), String(this.date), String(user_id)]
         
                     await this.database.insert('blocks(club_id,admin_id,duration,date,user_id)', parms, '?,?,?,?,?')
         
@@ -270,7 +270,7 @@ ID: ${user_id};
 
             const res = await this.database.select('admins', [String(this.club_id)], 'WHERE club_id=?')
             
-            let adminsArr = []
+            const adminsArr = []
 
             while (adminsArr.length < res.length) {
 
