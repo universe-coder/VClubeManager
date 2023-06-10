@@ -25,7 +25,7 @@ export class DB {
 
     }
 
-    async select (tableName: string, parms: string[], condition: string = ''): Promise<any> {
+    async select (tableName: string, parms: string[], condition: string = ''): Promise<mysql.RowDataPacket[] | mysql.RowDataPacket[][] | mysql.OkPacket | mysql.OkPacket[] | mysql.ResultSetHeader> {
 
         return await this.query(`SELECT * FROM ${tableName} ${condition}`, parms)
 
@@ -44,8 +44,6 @@ export class DB {
     }
 
     async query (str: string, parms: string[]): Promise<mysql.RowDataPacket[] | mysql.RowDataPacket[][] | mysql.OkPacket | mysql.OkPacket[] | mysql.ResultSetHeader> {
-
-        let res: mysql.RowDataPacket[] | mysql.RowDataPacket[][] | mysql.OkPacket | mysql.OkPacket[] | mysql.ResultSetHeader
 
         return new Promise(async (resolve) => {
 
