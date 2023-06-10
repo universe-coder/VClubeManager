@@ -28,7 +28,7 @@ export class Module extends MainController {
         if (this.conn.config.super_admin == user_id)
             return true
 
-        let res = await this.database.select('admins', [String(this.club_id), String(user_id)], `WHERE club_id=? AND user_id=? LIMIT 1`)
+        const res = await this.database.select('admins', [String(this.club_id), String(user_id)], `WHERE club_id=? AND user_id=? LIMIT 1`)
 
         if (isCanAdd && res.length > 0)
             return Number(res[0].can_add) == 1
