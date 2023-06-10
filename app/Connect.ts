@@ -31,7 +31,7 @@ export class Connect extends MainController {
         })
     
         this.socket.on("close", (err: number) => this.onclose(err))
-        this.socket.on('error', (err: string) => {})
+        this.socket.on('error', (err: string) => console.log(err))
         this.socket.on('message', (data) => this.onmessage(data))
         this.socket.on('pong', () => this.pong())
         this.socket.on('ping', () => this.ping())
