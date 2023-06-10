@@ -74,7 +74,7 @@ export class Connect extends MainController {
 
         if (data.clubber?.id) {
 
-            let CM: CommandManager = new CommandManager(this, data)
+            const CM: CommandManager = new CommandManager(this, data)
             CM.init()
 
             const sec = new Security(this, data)
