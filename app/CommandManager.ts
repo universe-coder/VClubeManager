@@ -2,6 +2,8 @@ import { Connect } from "./Connect"
 import { Module } from "./Module"
 import { EnteredUser } from "./Interface/CommandManager"
 import { MainController } from "./MainController"
+import { Data } from "./Interface/MainController"
+import { Admin } from "./Interface/Model/Admin"
 
 export class CommandManager extends Module {
 
@@ -9,11 +11,11 @@ export class CommandManager extends Module {
     private text: string
     conn: Connect
 
-    constructor (connecttion: Connect, data: any) {
+    constructor (connecttion: Connect, data: Data) {
 
         super(connecttion.config.host.club_id, data, connecttion.db, connecttion)
 
-        this.type = String(data.type)
+        this.type = data.type
         this.text = String((data.text) ? data.text : '')
 
     }
@@ -43,8 +45,8 @@ export class CommandManager extends Module {
 
         }
         
-        const splitText = this.text.split(' '),
-            index: number = -1
+        const splitText = this.text.split(' ');
+        let index: number = -1
 
         if ((index = this.searchCom(splitText, '!admin')) == 0)
             await this.admin(splitText[index+1] as 'add' | 'remove' | 'list', Number(splitText[index+2]))
@@ -133,7 +135,11 @@ ID: ${user_id};
 
     async countEvents (to_id: number, eventName: string): Promise<number> {
 
-        return (await this.database.select('logs', [to_id, this.club_id, eventName] as string[], `WHERE user_id=? AND club_id=? AND type=?`)).length
+        return (await this.database.select(
+            'logs',
+            [to_id, this.club_id, eventName] as string[], 
+            `WHERE user_id=? AND club_id=? AND type=?`
+        )).length
 
     }
 
@@ -268,15 +274,12 @@ ID: ${user_id};
 
         if (command == 'list') {
 
-            const res = await this.database.select('admins', [String(this.club_id)], 'WHERE club_id=?')
+            const res: Admin[] = await this.database.select('admins', [String(this.club_id)], 'WHERE club_id=?') as Admin[]
             
             const adminsArr = []
 
-            while (adminsArr.length < res.length) {
-
+            while (adminsArr.length < res.length)
                 adminsArr[adminsArr.length] = "id" + res[adminsArr.length].user_id
-
-            }
 
             message = 'Администраторы клуба: ' + adminsArr.join(', ')
 
