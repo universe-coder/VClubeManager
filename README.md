@@ -84,3 +84,5 @@ MySQL, NodeJS, желательно сервер или VDS/VPS и второй 
 ## Поддержать автора
 
 [https://yoomoney.ru/to/410012335150397](https://yoomoney.ru/to/410012335150397)
+
+[![CodeFactor](https://www.codefactor.io/repository/github/universe-coder/vclubemanager/badge)](https://www.codefactor.io/repository/github/universe-coder/vclubemanager)
