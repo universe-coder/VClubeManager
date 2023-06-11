@@ -1,5 +1,7 @@
 import { Module } from "./Module"
 import { Connect } from "./Connect"
+import { Data } from "./Interface/MainController"
+import { Log } from "./Interface/Model/Log"
 
 export class Security extends Module {
 
@@ -8,7 +10,7 @@ export class Security extends Module {
     private countLimit: number = 3
     conn: Connect
 
-    constructor (connection: Connect, data: any) {
+    constructor (connection: Connect, data: Data) {
 
         super(connection.config.host.club_id, data, connection.db, connection)
 
@@ -64,7 +66,11 @@ export class Security extends Module {
         }
 
         const duration = this.date - this.timeLimit
-        const res = await this.database.select('logs', [String(this.club_id), type, String(duration)], 'WHERE club_id=? AND type=? AND date>?')
+        const res: Log[] = await this.database.select(
+            'logs', 
+            [String(this.club_id), type, String(duration)], 
+            'WHERE club_id=? AND type=? AND date>?'
+        ) as Log[]
 
         if (res && res.length >= this.countLimit) {
 
