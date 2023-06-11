@@ -1,17 +1,19 @@
 import { Connect } from "./Connect"
 import { DB } from "./DB"
+import { Data } from "./Interface/MainController"
+import { Admin } from "./Interface/Model/Admin"
 import { MainController } from "./MainController"
 
 export class Module extends MainController {
 
     user_id: number
     club_id: number
-    data: any
+    data: Data
     database: DB
     date: number
     conn: Connect
 
-    constructor (club_id: number, data: any, database: DB, conn: Connect) {
+    constructor (club_id: number, data: Data, database: DB, conn: Connect) {
 
         super()
         this.database = database
@@ -28,7 +30,11 @@ export class Module extends MainController {
         if (this.conn.config.super_admin == user_id)
             return true
 
-        const res = await this.database.select('admins', [String(this.club_id), String(user_id)], `WHERE club_id=? AND user_id=? LIMIT 1`)
+        const res: Admin[] = await this.database.select(
+            'admins', 
+            [String(this.club_id), String(user_id)], 
+            `WHERE club_id=? AND user_id=? LIMIT 1`
+        ) as Admin[]
 
         if (isCanAdd && res.length > 0)
             return Number(res[0].can_add) == 1
