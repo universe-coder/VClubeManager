@@ -46,3 +46,14 @@ export interface Config {
     };
     
 }
+
+export interface Data {
+    type: string;
+    text: string;
+    to_id: number;
+    clubber: {
+        id: number;
+        name: string;
+    };
+    is_new: boolean;
+}
