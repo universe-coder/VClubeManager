@@ -1,5 +1,5 @@
 import { MainController } from "./MainController"
-import * as ws from 'ws'
+import WebSocket from 'ws'
 import { CommandManager } from "./CommandManager"
 import { Security } from "./Security"
 import { EnteredUser } from "./Interface/CommandManager"
@@ -7,15 +7,13 @@ import { EnteredUser } from "./Interface/CommandManager"
 export class Connect extends MainController {
 
     url: string
-    ws: any
-    socket: any
+    socket: WebSocket
     enteredUsers: EnteredUser[]
 
     constructor () {
         
         super()
         this.url = 'wss://club-vk-2020.ciliz.com/ws'
-        this.ws = ws
         this.enteredUsers = []
 
     }
@@ -24,7 +22,7 @@ export class Connect extends MainController {
 
         console.log('Connecting...')
 
-        this.socket = new this.ws.WebSocket(this.url, {
+        this.socket = new WebSocket(this.url, {
             origin: "https://209.selcdn.ru",
             followRedirects: false,
             handshakeTimeout: 20000
@@ -103,9 +101,9 @@ export class Connect extends MainController {
         this.send({
             type: "login",
             id: this.config.host.user_id,
-            auth: this.config.host.token,
+            auth: this.config.host.system_id+":"+this.config.host.token,
             club_id: this.config.host.club_id,
-            referrer_type: this.config.host.club_id,
+            referrer_type: 0,
             referrer_id: `group_${this.config.host.club_id}`,
             system_id: this.config.host.system_id
         })
