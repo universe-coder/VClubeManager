@@ -25,9 +25,9 @@ export class DB {
 
     }
 
-    async select (tableName: string, parms: string[], condition: string = ''): Promise<mysql.RowDataPacket[] | mysql.RowDataPacket[][] | mysql.OkPacket | mysql.OkPacket[] | mysql.ResultSetHeader> {
+    async select (tableName: string, parms: string[], condition: string = ''): Promise<mysql.RowDataPacket[] | mysql.RowDataPacket[][] | mysql.OkPacket[]> {
 
-        return await this.query(`SELECT * FROM ${tableName} ${condition}`, parms)
+        return await this.query(`SELECT * FROM ${tableName} ${condition}`, parms) as mysql.RowDataPacket[]
 
     }
 
