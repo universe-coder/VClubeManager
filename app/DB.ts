@@ -1,45 +1,47 @@
 import * as mysql from 'mysql2'
-import { Config } from './Interface/MainController'
 import { MainController } from './MainController'
 
 
-export class DB {
+export abstract class DB {
 
     private host:     string
     private database: string
     private username: string
     private password: string
+    private table: string
 
-    constructor (dbInfo: Config["DataBase"]) {
+    constructor () {
 
-        this.host = dbInfo.host
-        this.database = dbInfo.dbname
-        this.username = dbInfo.username
-        this.password = dbInfo.password
-
-    }
-
-    async insert (tableName: string, parms: string[], condition: string = ''): Promise<void> {
-
-        await this.query(`INSERT INTO ${tableName} VALUES (${condition})`, parms)
+        this.host = global.config.DataBase.host
+        this.database = global.config.DataBase.dbname
+        this.username = global.config.DataBase.username
+        this.password = global.config.DataBase.password
+        if (!this.table)
+            this.table = this.constructor.name.toLowerCase() + "s"
 
     }
 
-    async select (tableName: string, parms: string[], condition: string = ''): Promise<mysql.RowDataPacket[] | mysql.RowDataPacket[][] | mysql.OkPacket[]> {
+    async insert (parms: string[], condition: string = ''): Promise<void> {
 
-        return await this.query(`SELECT * FROM ${tableName} ${condition}`, parms) as mysql.RowDataPacket[]
-
-    }
-
-    async delete (tableName: string, parms: string[], condition: string = ''): Promise<void> {
-
-        await this.query(`DELETE FROM ${tableName} ${condition}`, parms)
+        await this.query(`INSERT INTO ${this.table} VALUES (${condition})`, parms)
 
     }
 
-    async update (tableName: string, parms: string[], condition: string = ''): Promise<void> {
+    async select (parms: string[], condition: string = ''): Promise<mysql.RowDataPacket[] | mysql.RowDataPacket[][] | mysql.OkPacket[]> {
 
-        await this.query(`UPDATE ${tableName} ${condition}`, parms)
+        return await this.query(`SELECT * FROM ${this.table} ${condition}`, parms) as mysql.RowDataPacket[]
+
+    }
+
+    async delete (parms: string[], condition: string = ''): Promise<void> {
+
+        await this.query(`DELETE FROM ${this.table} ${condition}`, parms)
+
+    }
+
+    async update (parms: string[], condition: string = ''): Promise<void> {
+
+        await this.query(`UPDATE ${this.table} ${condition}`, parms)
 
     }
 

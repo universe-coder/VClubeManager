@@ -3,18 +3,27 @@ import { Module } from "./Module"
 import { EnteredUser } from "./Interface/CommandManager"
 import { MainController } from "./MainController"
 import { Data } from "./Interface/MainController"
-import { Admin } from "./Interface/Model/Admin"
+import { Admin } from "./Models/Admin"
+import { Block } from "./Models/Block"
+import { Log } from "./Models/Log"
 
 export class CommandManager extends Module {
 
+    private blocks: Block
+    private logs: Log
+    private admins: Admin
     private type: string
     private text: string
     conn: Connect
 
-    constructor (connecttion: Connect, data: Data) {
+    constructor (connection: Connect, data: Data) {
 
-        super(connecttion.config.host.club_id, data, connecttion.db, connecttion)
+        super(global.config.host.club_id, data, connection)
 
+        this.blocks = new Block()
+        this.logs = new Log()
+        this.admins = new Admin()
+        
         this.type = data.type
         this.text = String((data.text) ? data.text : '')
 
@@ -24,67 +33,77 @@ export class CommandManager extends Module {
 
         let date = this.date
 
-        if (this.user_id == Number(this.conn.config.host.user_id))
+        if (this.user_id == Number(global.config.host.user_id))
             date -= 2
 
-        await this.database.insert('logs(club_id, user_id, type, text, date)', 
-                                [String(this.club_id), String(this.user_id), this.type, this.text, String(date)],
-                                '?, ?, ?, ?, ?')
+        await this.logs.insert(
+            [String(this.club_id), String(this.user_id), this.type, this.text, String(date)],
+            'NULL, ?, ?, ?, ?, ?'
+        )
 
-        if (this.type == 'enter' && this.conn.config.welcome_message.enable) {
+        if (this.type == 'enter' && global.config.welcome_message.enable) {
 
             const enterUserInfo = this.findEntered(this.user_id)
 
             if (!enterUserInfo) {
 
                 await MainController.sleep(2000)
-                this.createMessage(this.conn.config.welcome_message.text)
+                this.createMessage(global.config.welcome_message.text)
                 this.conn.enteredUsers[this.conn.enteredUsers.length] = { user_id: this.user_id, date: this.date }
 
             }            
 
         }
         
-        const splitText = this.text.split(' ');
-        let index: number = -1
+        const message = await this.command(this.text)
+        if (message)
+            this.createMessage(message)
+    }
 
-        if ((index = this.searchCom(splitText, '!admin')) == 0)
-            await this.admin(splitText[index+1] as 'add' | 'remove' | 'list', Number(splitText[index+2]))
+    async command (text: string): Promise<string> {
+        const splitText = text.split(' ');
+        let index = -1
+
+        if ((index = CommandManager.searchCom(splitText, '!admin')) == 0)
+            return await this.admin(
+                splitText[index+1] as 'add' | 'remove' | 'list', 
+                Number(splitText[index+2])
+            )
         
-        if ([0, 1].indexOf(index = this.searchCom(splitText, '!stats')) > -1)
-            await this.stats(Number(splitText[index+1]))
+        if ([0, 1].indexOf(index = CommandManager.searchCom(splitText, '!stats')) > -1)
+            return await this.stats(Number(splitText[index+1]))
 
         if (await this.isAdmin()) {
 
-            if ((index = this.searchCom(splitText, '!help')) == 0)
-                await this.help()
+            if ((index = CommandManager.searchCom(splitText, '!help')) == 0)
+                return this.help()
 
-            if ([0, 1].indexOf(index = this.searchCom(splitText, '!kick')) > -1)
-                await this.kick(Number(splitText[index+1]))
+            if ([0, 1].indexOf(index = CommandManager.searchCom(splitText, '!kick')) > -1)
+                return await this.kick(Number(splitText[index+1]))
 
-            if ([0, 1].indexOf(index = this.searchCom(splitText, '!ban')) > -1) {
+            if ([0, 1].indexOf(index = CommandManager.searchCom(splitText, '!ban')) > -1) {
 
-                let duration: number = 0
+                let duration = 0
 
                 if (this.data.to_id) {
                     if (Number(splitText[index+1]))
                         duration = Number(splitText[index+1])
                     
-                    await this.ban(this.data.to_id, duration)
+                    return await this.ban(this.data.to_id, duration)
                 }else {
-                    if (Number(splitText[index+2]))
-                        duration = Number(splitText[index+2])
 
-                    await this.ban(Number(splitText[index+1]), duration)
+                    if (splitText[2])
+                        duration = Number(splitText[2])
+
+                    return await this.ban(Number(splitText[1]), duration)
                 }
                 
             }
 
-            if ((index = this.searchCom(splitText, '!unban')) == 0)
-                await this.unban(Number(splitText[index+1]))
+            if ((index = CommandManager.searchCom(splitText, '!unban')) == 0)
+                return this.unban(Number(splitText[index+1]))
 
         }
-
     }
 
     findEntered (user_id: number): EnteredUser | false {
@@ -95,7 +114,7 @@ export class CommandManager extends Module {
 
             if (user.user_id == user_id) {
 
-                if (user.date > (this.date - this.conn.config.welcome_message.interval))
+                if (user.date > (this.date - global.config.welcome_message.interval))
                     return user
                 else
                     this.conn.enteredUsers.splice(i, 1)
@@ -110,14 +129,14 @@ export class CommandManager extends Module {
 
     }
 
-    async stats (user_id?: number): Promise<void> {
+    async stats (user_id?: number): Promise<string> {
 
         if(!user_id)
             user_id = this.data.to_id
 
         if (user_id) {
 
-            const message = `
+            return `
 ID: ${user_id}; 
 Сообщении: ${await this.countEvents(user_id, 'chat')}; 
 Лайков: ${await this.countEvents(user_id, 'like')};
@@ -126,24 +145,22 @@ ID: ${user_id};
 Песен: ${await this.countEvents(user_id, 'start_song')}
             `
 
-            await this.createMessage(message)
-
-
         }
+
+        return '';
 
     }
 
     async countEvents (to_id: number, eventName: string): Promise<number> {
 
-        return (await this.database.select(
-            'logs',
+        return (await this.logs.select(
             [to_id, this.club_id, eventName] as string[], 
             `WHERE user_id=? AND club_id=? AND type=?`
         )).length
 
     }
 
-    searchCom (text: string[], name: string): number {
+    static searchCom (text: string[], name: string): number {
 
         for (let i = 0; i < text.length; i++)
             if (text[i] == name)
@@ -153,120 +170,94 @@ ID: ${user_id};
 
     }
 
-    async help (): Promise<void> {
+    help (): string {
 
-        await this.createMessage('Список актуальных команд доступен в группе проекта')
+        return 'Список актуальных команд доступен в группе проекта'
 
     }
 
-    async kick (user_id?: number): Promise<void> {
+    async kick (user_id?: number): Promise<string> {
 
         if (!user_id)
             user_id = this.data.to_id
 
         if (user_id) {
 
-            if (await this.isAdmin(user_id)) {
+            if (await this.isAdmin(user_id))
+                return 'Вы не можете исключать других администраторов!'
 
-                await this.createMessage('Вы не можете исключать других администраторов!')
-
-            }else {
-
-                this.conn.send({ type: "club_ban", user_id: user_id })
-
-            }
+            this.conn.send({ type: "club_ban", user_id: user_id })
+            return 'Пользователь исключен из клуба'
             
         }
 
     }
 
-    async ban (user_id?: number, duration: number = 0): Promise<void> {
+    async ban (user_id?: number, duration: number = 0): Promise<string> {
 
         if (user_id) {
 
-            if (!(await this.isAdmin(user_id))) {
+            if (await this.isAdmin(user_id))
+                return 'Вы не можете банить других администраторов!'
 
-                if (!(await this.isBanned(user_id))) {
+            if (await this.isBanned(user_id))
+                return 'Данный пользователь уже забанен!'
 
-                    if (duration > 0)
-                        duration = this.date + duration
-        
-                    const parms = [String(this.club_id), String(this.user_id), String(duration), String(this.date), String(user_id)]
-        
-                    await this.database.insert('blocks(club_id,admin_id,duration,date,user_id)', parms, '?,?,?,?,?')
-        
-                    this.conn.send({
-                        type: "club_ban",
-                        user_id: user_id
-                    })
+            if (duration > 0)
+                duration = this.date + duration
 
-                    await this.createMessage(`Пользователь забанен на срок: ${(duration) ? (duration - this.date)+' секунд' : 'навсегда'}`)
-        
-                }else {
-        
-                    await this.createMessage('Данный пользователь уже забанен!')
-        
-                }
+            const parms = [String(this.club_id), String(user_id), String(this.user_id), String(duration), String(this.date)]
 
-            }else {
+            await this.blocks.insert(parms, 'NULL,?,?,?,?,?')
 
-                await this.createMessage('Вы не можете банить других администраторов!')
+            this.conn.send({
+                type: "club_ban",
+                user_id: user_id
+            })
 
-            }
+            return `Пользователь забанен на срок: ${(duration) ? (duration - this.date)+' секунд' : 'навсегда'}`
 
         }
 
     }
 
-    async unban (user_id: number): Promise<void> {
+    unban (user_id: number): string {
 
-        await this.database.delete('blocks', [String(this.club_id), String(user_id)], 'WHERE club_id=? AND user_id=?')
-
-        await this.createMessage('Пользователь успешно разблокирован! Блокировка в игре спадёт через сутки.')
+        this.blocks.delete(
+            [String(this.club_id), String(user_id)], 
+            'WHERE club_id=? AND user_id=?'
+        )
+        return 'Пользователь успешно разблокирован! Блокировка в игре спадёт через сутки.'
 
     }
 
-    async admin (command: 'add'|'remove'|'list', user_id?:number): Promise<void> {
+    async admin (command: 'add'|'remove'|'list', user_id?:number): Promise<string> {
 
         let message = ''
 
         if (await this.isAdmin(this.user_id)) {
 
-            if (user_id) {
+            if (!user_id)
+                return 'Не указан параметр user_id!'
 
-                if (await this.isAdmin(this.user_id, true)) {
+            if (!await this.isAdmin(this.user_id, true))
+                return 'У Вас нет доступа к этой команде!';
 
-                    if (command == 'add') {
-        
-                        if (!(await this.isAdmin(user_id))) {
+            switch (command) {
+                case 'add':
+                    if (await this.isAdmin(user_id))
+                        message = 'Пользователь уже добавлен в администраторы!'
 
-                            await this.database.insert('admins(club_id,user_id,date)', [String(this.club_id), String(user_id), String(this.date)], '?,?,?')
-                            message = 'Пользователь назначен администратором клуба'
-
-                        }else {
-
-                            message = 'Пользователь уже добавлен в администраторы!'
-
-                        }
-                        
-            
-                    }else if (command == 'remove') {
-            
-                        await this.database.delete('admins', [String(this.club_id), String(user_id)], `WHERE club_id=? AND user_id=? LIMIT 1`)
-                        message = 'Пользователь удален из администрации клуба'
-            
-                    }
-        
-                }else {
-        
-                    message = 'У Вас нет доступа к этой команде!'
-        
-                }
-
-            }else {
-
-                message = 'Не указан параметр user_id!'
-
+                    this.admins.insert([
+                        String(this.club_id), String(user_id), String(this.date)], 
+                        'NULL,?,?,0,?'
+                    )
+                    message = 'Пользователь назначен администратором клуба'
+                    break;
+                case 'remove':
+                    this.admins.delete([String(this.club_id), String(user_id)], `WHERE club_id=? AND user_id=? LIMIT 1`)
+                    message = 'Пользователь удален из администрации клуба'
+                    break;
             }
 
         }
@@ -274,7 +265,7 @@ ID: ${user_id};
 
         if (command == 'list') {
 
-            const res: Admin[] = await this.database.select('admins', [String(this.club_id)], 'WHERE club_id=?') as Admin[]
+            const res: Admin[] = await this.admins.select([String(this.club_id)], 'WHERE club_id=?') as Admin[]
             
             const adminsArr = []
 
@@ -285,8 +276,7 @@ ID: ${user_id};
 
         }
 
-        if (message)
-            await this.createMessage(message)
+        return message
 
     }
 

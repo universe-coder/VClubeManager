@@ -1,7 +1,7 @@
 import { Module } from "./Module"
 import { Connect } from "./Connect"
 import { Data } from "./Interface/MainController"
-import { Log } from "./Interface/Model/Log"
+import { Log } from "./Models/Log"
 
 export class Security extends Module {
 
@@ -12,7 +12,7 @@ export class Security extends Module {
 
     constructor (connection: Connect, data: Data) {
 
-        super(connection.config.host.club_id, data, connection.db, connection)
+        super(global.config.host.club_id, data, connection)
 
         this.sendData = []
 
@@ -43,31 +43,31 @@ export class Security extends Module {
         switch (type) {
 
             case 'chat':
-                this.countLimit = this.conn.config.limits.messages.count
-                this.timeLimit = this.conn.config.limits.messages.time
+                this.countLimit = global.config.limits.messages.count
+                this.timeLimit = global.config.limits.messages.time
                 break
             case 'enter':
-                this.countLimit = this.conn.config.limits.enter.count
-                this.timeLimit = this.conn.config.limits.enter.time
+                this.countLimit = global.config.limits.enter.count
+                this.timeLimit = global.config.limits.enter.time
                 break
             case 'like':
-                this.countLimit = this.conn.config.limits.likes.count
-                this.timeLimit = this.conn.config.limits.likes.time
+                this.countLimit = global.config.limits.likes.count
+                this.timeLimit = global.config.limits.likes.time
                 break
             case 'dislike':
-                this.countLimit = this.conn.config.limits.dislikes.count
-                this.timeLimit = this.conn.config.limits.dislikes.time
+                this.countLimit = global.config.limits.dislikes.count
+                this.timeLimit = global.config.limits.dislikes.time
                 break
             case 'superlike':
-                this.countLimit = this.conn.config.limits.superlikes.count
-                this.timeLimit = this.conn.config.limits.superlikes.time
+                this.countLimit = global.config.limits.superlikes.count
+                this.timeLimit = global.config.limits.superlikes.time
                 break
 
         }
 
         const duration = this.date - this.timeLimit
-        const res: Log[] = await this.database.select(
-            'logs', 
+        const logs = new Log()
+        const res: Log[] = await logs.select(
             [String(this.club_id), type, String(duration)], 
             'WHERE club_id=? AND type=? AND date>?'
         ) as Log[]

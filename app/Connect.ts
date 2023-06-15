@@ -3,12 +3,14 @@ import WebSocket from 'ws'
 import { CommandManager } from "./CommandManager"
 import { Security } from "./Security"
 import { EnteredUser } from "./Interface/CommandManager"
+import * as readline from 'readline'
 
 export class Connect extends MainController {
 
     url: string
     socket: WebSocket
     enteredUsers: EnteredUser[]
+    CM: CommandManager
 
     constructor () {
         
@@ -20,7 +22,7 @@ export class Connect extends MainController {
 
     run (): void {
 
-        console.log('Connecting...')
+        console.log('Подключение...')
 
         this.socket = new WebSocket(this.url, {
             origin: "https://209.selcdn.ru",
@@ -40,7 +42,7 @@ export class Connect extends MainController {
     onclose (errInfo: number): void {
 
         if (errInfo == 1000) {
-            console.log(`${this.config.host.user_id}: Token problem!`)
+            console.log(`${global.config.host.user_id}: Проблема с токеном!`)
         }else {
             this.reconnect(String(errInfo))
         }
@@ -51,14 +53,14 @@ export class Connect extends MainController {
 
         await MainController.sleep(50000)
         this.run()
-        console.log(`${this.config.host.user_id}: reconnecting! (${err})`)
+        console.log(`${global.config.host.user_id}: Переподключение! (${err})`)
 
     }
 
     onmessage (data): void {
-
-        data = JSON.parse(data.toString())        
-
+        
+        data = JSON.parse(data.toString())
+        
         if (data.type == 'vote' && data.is_new == true) {
 
             data.clubber = { id: data.clubber_id }
@@ -71,6 +73,15 @@ export class Connect extends MainController {
         }
 
         if (data.clubber?.id) {
+
+            switch (data.type) {
+                case 'enter':
+                    console.log(`${data.clubber.name} (${data.clubber.id}): Подключился(-ась)`);
+                    break;
+                case 'leave':
+                    console.log(`${data.clubber.name} (${data.clubber.id}): Отключился(-ась)`);
+                    break;
+            }
 
             const CM: CommandManager = new CommandManager(this, data)
             CM.init()
@@ -100,12 +111,12 @@ export class Connect extends MainController {
 
         this.send({
             type: "login",
-            id: this.config.host.user_id,
-            auth: this.config.host.system_id+":"+this.config.host.token,
-            club_id: this.config.host.club_id,
+            id: global.config.host.user_id,
+            auth: global.config.host.token,
+            club_id: global.config.host.club_id,
             referrer_type: 0,
-            referrer_id: `group_${this.config.host.club_id}`,
-            system_id: this.config.host.system_id
+            referrer_id: `group_${global.config.host.club_id}`,
+            system_id: global.config.host.system_id
         })
 
         this.send({
@@ -117,7 +128,8 @@ export class Connect extends MainController {
             this.send({ type: "ping" })
         }, 3000)
 
-        console.log(`${this.config.host.user_id}: Connected!`)
+        console.log(`Вы подключились к клубу!`)
+        this.consoleRead()
 
     }
 
@@ -125,6 +137,34 @@ export class Connect extends MainController {
 
         this.socket.send(JSON.stringify(data))
 
+    }
+
+    async consoleRead () {
+        const rl = readline.createInterface({
+            input: process.stdin,
+            output: process.stdout
+        });
+
+        rl.question('Команда: \n', async (answer) => {
+            const CM: CommandManager = new CommandManager(
+                this, 
+                {
+                    type: "chat",
+                    text: answer,
+                    is_new: false,
+                    to_id: 0,
+                    clubber: {
+                        id: global.config.host.user_id,
+                        name: ""
+                    }
+                }
+            )
+            
+            console.log(await CM.command(answer));
+            
+            rl.close();
+            this.consoleRead()
+        });
     }
 
 }
